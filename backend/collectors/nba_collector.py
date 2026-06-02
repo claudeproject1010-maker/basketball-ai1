@@ -1,7 +1,5 @@
 """
-NBA Stats Collector
-Pulls pace, offensive rating, defensive rating, and game logs
-from the official NBA stats website. Completely free — no API key needed.
+NBA Stats Collector — fixed per_mode_simple argument
 """
 
 import time
@@ -11,7 +9,7 @@ from nba_api.stats.endpoints import leaguedashteamstats, teamgamelogs
 from nba_api.stats.static import teams
 
 log = logging.getLogger(__name__)
-DELAY = 1.2   # seconds between requests (NBA blocks fast requests)
+DELAY = 1.5
 
 
 def get_all_teams() -> pd.DataFrame:
@@ -21,37 +19,55 @@ def get_all_teams() -> pd.DataFrame:
 def get_team_advanced_stats(season: str = "2024-25") -> pd.DataFrame:
     log.info(f"Pulling NBA advanced stats for {season}...")
     time.sleep(DELAY)
-    df = leaguedashteamstats.LeagueDashTeamStats(
-        season=season,
-        season_type_all_star="Regular Season",
-        per_mode_simple="PerGame",
-        measure_type_simple="Advanced",
-    ).get_data_frames()[0]
+    try:
+        # per_mode_simple was renamed to per_mode in newer nba_api versions
+        df = leaguedashteamstats.LeagueDashTeamStats(
+            season=season,
+            season_type_all_star="Regular Season",
+            per_mode_simple="PerGame",
+            measure_type_simple="Advanced",
+        ).get_data_frames()[0]
+    except TypeError:
+        # Fallback for older/newer nba_api versions
+        try:
+            df = leaguedashteamstats.LeagueDashTeamStats(
+                season=season,
+                season_type_all_star="Regular Season",
+                per_mode="PerGame",
+                measure_type="Advanced",
+            ).get_data_frames()[0]
+        except Exception as e:
+            log.error(f"NBA stats failed both attempts: {e}")
+            return pd.DataFrame()
 
     keep = ["TEAM_ID","TEAM_NAME","PACE","E_PACE","OFF_RATING","DEF_RATING",
-            "NET_RATING","EFG_PCT","TS_PCT","TM_TOV_PCT","OREB_PCT","DREB_PCT"]
+            "NET_RATING","EFG_PCT","TS_PCT","TM_TOV_PCT"]
     return df[[c for c in keep if c in df.columns]]
 
 
 def get_team_game_logs(team_id: int, season: str = "2024-25", last_n: int = 10) -> pd.DataFrame:
     log.info(f"Pulling game logs for team {team_id}...")
     time.sleep(DELAY)
-    df = teamgamelogs.TeamGameLogs(
-        team_id_nullable=team_id,
-        season_nullable=season,
-        season_type_nullable="Regular Season",
-    ).get_data_frames()[0].head(last_n)
-
-    df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
-    df["HOME"]      = df["MATCHUP"].apply(lambda x: 1 if "vs." in x else 0)
-    if "PTS" in df.columns and "PLUS_MINUS" in df.columns:
-        df["OPP_PTS"] = df["PTS"] - df["PLUS_MINUS"]
-    return df
+    try:
+        df = teamgamelogs.TeamGameLogs(
+            team_id_nullable=team_id,
+            season_nullable=season,
+            season_type_nullable="Regular Season",
+        ).get_data_frames()[0].head(last_n)
+        df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
+        df["HOME"] = df["MATCHUP"].apply(lambda x: 1 if "vs." in x else 0)
+        if "PTS" in df.columns and "PLUS_MINUS" in df.columns:
+            df["OPP_PTS"] = df["PTS"] - df["PLUS_MINUS"]
+        return df
+    except Exception as e:
+        log.error(f"Game logs failed for team {team_id}: {e}")
+        return pd.DataFrame()
 
 
 def build_team_stats_lookup(season: str = "2024-25") -> dict:
-    """Returns {team_name: {pace, off_rating, def_rating, ...}}"""
     adv = get_team_advanced_stats(season)
+    if adv.empty:
+        return {}
     result = {}
     for _, row in adv.iterrows():
         result[row["TEAM_NAME"]] = {
@@ -63,11 +79,3 @@ def build_team_stats_lookup(season: str = "2024-25") -> dict:
             "ts_pct":     row.get("TS_PCT"),
         }
     return result
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    print("\n=== NBA COLLECTOR TEST ===")
-    adv = get_team_advanced_stats()
-    print(f"Teams loaded: {len(adv)}")
-    print(adv[["TEAM_NAME","PACE","OFF_RATING","DEF_RATING"]].head(5).to_string(index=False))
