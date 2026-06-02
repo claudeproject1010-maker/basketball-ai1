@@ -1,0 +1,30 @@
+# Your private API key — never upload this
+backend/.env
+.env
+
+# Python generated files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database file (lives on GitHub Actions server, not in repo)
+*.db
+*.sqlite
+
+# Logs
+backend/logs/
+
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# Mac files
+.DS_Store
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/out/
