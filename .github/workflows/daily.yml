@@ -19,6 +19,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          clean: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,10 +40,12 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
+          git stash || true
+          git pull origin main --no-rebase || true
+          git stash pop || true
           git add frontend/public/predictions.json frontend/public/history.json frontend/public/model_meta.json backend/models/ || true
           git diff --cached --quiet || git commit -m "predictions update $(date -u +%Y-%m-%d)"
-          git push
+          git push || git push --force-with-lease
 
       - name: Save logs
         uses: actions/upload-artifact@v4
