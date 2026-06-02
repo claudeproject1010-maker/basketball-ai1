@@ -2,9 +2,9 @@ name: Daily Pipeline
 
 on:
   schedule:
-    - cron: "0 14 * * *"   # runs 2 PM UTC = 9 AM US Eastern every day
-    - cron: "0 19 * * *"   # runs 7 PM UTC = 2 PM US Eastern (line movement check)
-  workflow_dispatch:        # lets you click "Run" manually in GitHub
+    - cron: "0 14 * * *"
+    - cron: "0 19 * * *"
+  workflow_dispatch:
 
 jobs:
   run-pipeline:
@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,6 +39,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add frontend/public/predictions.json frontend/public/history.json frontend/public/model_meta.json backend/models/ || true
           git diff --cached --quiet || git commit -m "predictions update $(date -u +%Y-%m-%d)"
           git push
