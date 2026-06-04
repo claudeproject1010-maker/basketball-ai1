@@ -2,8 +2,9 @@ name: Daily Pipeline
 
 on:
   schedule:
-    - cron: "0 14 * * *"   # 9 AM ET
-    - cron: "0 19 * * *"   # 2 PM ET
+    - cron: "0 14 * * *"   # 9AM ET — before most games
+    - cron: "0 19 * * *"   # 2PM ET — line movement check
+    - cron: "0 7  * * *"   # 2AM ET — grade overnight results
   workflow_dispatch:
 
 jobs:
@@ -14,7 +15,7 @@ jobs:
       contents: write
 
     steps:
-      - name: Download the code
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -33,23 +34,24 @@ jobs:
       - name: Run the pipeline
         working-directory: backend
         env:
-          ODDS_API_KEY:    ${{ secrets.ODDS_API_KEY }}
-          RAPID_API_KEY:   ${{ secrets.RAPID_API_KEY }}
-          BALLDONTLIE_KEY: ${{ secrets.BALLDONTLIE_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python pipeline.py
 
-      - name: Save predictions to repo
+      - name: Commit predictions + graded history
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git stash || true
           git pull origin main --no-rebase || true
           git stash pop || true
-          git add frontend/public/predictions.json \
-                  frontend/public/history.json \
-                  frontend/public/model_meta.json \
-                  backend/models/ || true
-          git diff --cached --quiet || git commit -m "predictions update $(date -u +%Y-%m-%d)"
+          git add \
+            frontend/public/predictions.json \
+            frontend/public/history.json \
+            frontend/public/model_meta.json \
+            backend/data/predictions/ \
+            backend/models/ \
+            || true
+          git diff --cached --quiet || git commit -m "predictions + grades $(date -u +%Y-%m-%d\ %H:%M)"
           git push || git push --force-with-lease
 
       - name: Save logs
