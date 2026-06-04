@@ -34,7 +34,9 @@ jobs:
       - name: Run the pipeline
         working-directory: backend
         env:
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ODDS_API_KEY:    ${{ secrets.ODDS_API_KEY }}
+          RAPID_API_KEY:   ${{ secrets.RAPID_API_KEY }}
+          BALLDONTLIE_KEY: ${{ secrets.BALLDONTLIE_KEY }}
         run: python pipeline.py
 
       - name: Commit predictions + graded history
