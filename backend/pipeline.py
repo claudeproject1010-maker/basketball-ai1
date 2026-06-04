@@ -38,18 +38,40 @@ MODEL_PATH  = Path(__file__).parent / "models" / "xgb_totals.joblib"
 PRED_DIR    = Path("data/predictions")
 
 
+# League scoring baselines — used when no bookmaker line exists
+LEAGUE_BASELINES = {
+    "basketball_nba":               220.0,
+    "basketball_wnba":              168.0,
+    "basketball_ncaab":             148.0,
+    "basketball_ncaaw":             130.0,
+    "basketball_nba_summer_league": 215.0,
+    "basketball_euroleague":        162.0,
+    "basketball_eurocup":           158.0,
+}
+
 def make_simple_prediction(game: dict) -> dict:
-    """Statistical model — fallback until XGBoost is trained."""
-    line = game.get("consensus_total", 220)
+    """Statistical model — works for ALL games with or without a bookmaker line."""
+    league = game.get("league", "")
+    has_line = game.get("has_line", False)
+
+    # Get line — fall back to league baseline if no bookmaker line
+    line = game.get("consensus_total")
+    if not line:
+        line = LEAGUE_BASELINES.get(league, 165.0)
+        has_line = False
+
     books = game.get("books", {})
     if books:
-        totals = [v.get("total", line) for v in books.values() if v.get("total")]
+        totals = [v.get("total") for v in books.values() if v.get("total")]
         if totals:
             line = round(sum(totals) / len(totals), 1)
 
-    move         = game.get("line_movement", 0) or 0
-    total_range  = game.get("total_range", [line, line])
-    spread       = total_range[1] - total_range[0] if len(total_range) == 2 else 1.0
+    move        = game.get("line_movement", 0) or 0
+    total_range = game.get("total_range") or [None, None]
+    try:
+        spread = float(total_range[1]) - float(total_range[0]) if (total_range[0] is not None and total_range[1] is not None) else 1.0
+    except (TypeError, ValueError):
+        spread = 1.0
     move_signal  = move * 0.04
     spread_signal= -spread * 0.01
     prob_over    = max(0.40, min(0.70, 0.50 + move_signal + spread_signal))
@@ -60,14 +82,14 @@ def make_simple_prediction(game: dict) -> dict:
     ev_over      = (prob_over  * 0.909) - (1 - prob_over)
     ev_under     = (prob_under * 0.909) - (1 - prob_under)
 
-    if prob_over >= 0.57 and ev_over > 0:
+    if has_line and prob_over >= 0.54 and ev_over > 0:
         play, play_prob, edge, ev = "OVER", prob_over, edge_over, ev_over
-    elif prob_under >= 0.57 and ev_under > 0:
+    elif has_line and prob_under >= 0.54 and ev_under > 0:
         play, play_prob, edge, ev = "UNDER", prob_under, edge_under, ev_under
     else:
         play, play_prob, edge, ev = "PASS", max(prob_over, prob_under), max(edge_over, edge_under), max(ev_over, ev_under)
 
-    conf = "HIGH" if play_prob >= 0.65 else "MEDIUM" if play_prob >= 0.57 else "LOW"
+    conf = "HIGH" if play_prob >= 0.63 else "MEDIUM" if play_prob >= 0.56 else "LOW"
 
     kelly_stake = None
     if play != "PASS" and ev > 0:
