@@ -207,8 +207,8 @@ def get_balldontlie_games() -> list[dict]:
     games = []
     headers = {"Authorization": BDL_KEY}
     endpoints = [
-        (f"{BDL_BASE}/games",      "basketball_nba",  "NBA"),
-        (f"{BDL_BASE}/wnba/games", "basketball_wnba", "WNBA"),
+        (f"{BDL_BASE}/nba/v1/games",  "basketball_nba",  "NBA"),
+        (f"{BDL_BASE}/wnba/v1/games", "basketball_wnba", "WNBA"),
     ]
 
     for offset in range(2):
