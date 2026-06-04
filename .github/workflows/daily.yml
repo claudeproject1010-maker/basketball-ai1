@@ -2,8 +2,8 @@ name: Daily Pipeline
 
 on:
   schedule:
-    - cron: "0 14 * * *"
-    - cron: "0 19 * * *"
+    - cron: "0 14 * * *"   # 9 AM ET
+    - cron: "0 19 * * *"   # 2 PM ET
   workflow_dispatch:
 
 jobs:
@@ -33,17 +33,22 @@ jobs:
       - name: Run the pipeline
         working-directory: backend
         env:
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ODDS_API_KEY:    ${{ secrets.ODDS_API_KEY }}
+          RAPID_API_KEY:   ${{ secrets.RAPID_API_KEY }}
+          BALLDONTLIE_KEY: ${{ secrets.BALLDONTLIE_KEY }}
         run: python pipeline.py
 
-      - name: Save predictions to repo (so Vercel can read them)
+      - name: Save predictions to repo
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git stash || true
           git pull origin main --no-rebase || true
           git stash pop || true
-          git add frontend/public/predictions.json frontend/public/history.json frontend/public/model_meta.json backend/models/ || true
+          git add frontend/public/predictions.json \
+                  frontend/public/history.json \
+                  frontend/public/model_meta.json \
+                  backend/models/ || true
           git diff --cached --quiet || git commit -m "predictions update $(date -u +%Y-%m-%d)"
           git push || git push --force-with-lease
 
