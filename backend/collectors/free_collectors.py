@@ -18,10 +18,17 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
-HEADERS = {
-    "User-Agent": "BasketballAI/1.0 (basketball prediction tool)",
-    "Accept":     "application/json",
-}
+def _bdl_headers() -> dict:
+    """Build headers — include Authorization if key available."""
+    h = {
+        "User-Agent": "BasketballAI/1.0",
+        "Accept":     "application/json",
+    }
+    if BDL_KEY:
+        h["Authorization"] = BDL_KEY
+    return h
+
+HEADERS = _bdl_headers()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -35,7 +42,11 @@ BDL_BASE = "https://api.balldontlie.io/v1"
 
 def _bdl_get(path: str, params: dict = {}) -> Optional[dict]:
     try:
-        r = requests.get(f"{BDL_BASE}/{path}", params=params, headers=HEADERS, timeout=10)
+        headers = _bdl_headers()
+        r = requests.get(f"{BDL_BASE}/{path}", params=params, headers=headers, timeout=10)
+        if r.status_code == 401:
+            log.warning(f"[BDL] 401 Unauthorized — check BALLDONTLIE_KEY in GitHub Secrets")
+            return None
         r.raise_for_status()
         return r.json()
     except Exception as e:
