@@ -99,7 +99,7 @@ function PredCard({ pred, expanded, onToggle }) {
 
   return (
     <div onClick={onToggle} style={{
-      background: expanded ? "linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.04))" : "rgba(255,255,255,0.04)",
+      background: expanded ? "linear-gradient(135deg,rgba(255,255,255,0.10),rgba(255,255,255,0.065))" : "rgba(255,255,255,0.065)",
       backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
       border:`1px solid ${expanded?cc.border:"rgba(255,255,255,0.08)"}`,
       borderLeft:`3px solid ${isAct?cc.ring:"rgba(255,255,255,0.15)"}`,
@@ -208,7 +208,7 @@ function PredCard({ pred, expanded, onToggle }) {
       {expanded && (
         <div style={{marginTop:16,background:"rgba(0,0,0,0.3)",borderRadius:12,padding:"16px",
           borderTop:`1px solid ${cc.border}`}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14,className:"bai-card-stats"}}>
             {[
               ["Proj. Total",pred.mc_mean?.toFixed(1)],
               ["Std Dev",`±${pred.mc_std?.toFixed(1)}`],
@@ -268,13 +268,13 @@ function HistoryTab({ history }) {
   const totalPnL   = gradedDays.reduce((s,h)=>s+h.pnl,0);
   const winRate    = totalBets>0 ? totalWins/totalBets : 0;
 
-  const glass = {background:"rgba(255,255,255,0.04)",backdropFilter:"blur(12px)",
-    border:"1px solid rgba(255,255,255,0.08)",borderRadius:12};
+  const glass = {background:"rgba(255,255,255,0.07)",backdropFilter:"blur(20px)",
+    WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:12};
 
   return (
     <div>
       {/* Summary KPIs */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20,className:"bai-hist-kpi"}}>
         {[
           ["Record",    `${totalWins}W–${totalBets-totalWins}L`, winRate>=0.55?"#4ade80":winRate>=0.5?"#fbbf24":"#f87171"],
           ["Win Rate",  `${(winRate*100).toFixed(1)}%`,           winRate>=0.55?"#4ade80":"#fbbf24"],
@@ -561,17 +561,138 @@ const MOCK_HIST = [
 ];
 
 // ── Main App ─────────────────────────────────────────────────────────────────
+
 export default function App() {
-  const [preds,      setPreds]      = useState(MOCK_PREDS);
-  const [history,    setHistory]    = useState(MOCK_HIST);
-  const [genAt,      setGenAt]      = useState(null);
-  const [live,       setLive]       = useState(false);
-  const [activeTab,  setActiveTab]  = useState("predictions");
-  const [filter,     setFilter]     = useState("ALL");
-  const [leagueFilter,setLeagueFilter]=useState("ALL");
-  const [topN,       setTopN]       = useState("ALL");
-  const [sortBy,     setSortBy]     = useState("confidence");
-  const [expanded,   setExpanded]   = useState(null);
+  const [preds,       setPreds]       = useState(MOCK_PREDS);
+  const [history,     setHistory]     = useState(MOCK_HIST);
+  const [genAt,       setGenAt]       = useState(null);
+  const [live,        setLive]        = useState(false);
+  const [activeTab,   setActiveTab]   = useState("predictions");
+  const [filter,      setFilter]      = useState("ALL");
+  const [leagueFilter,setLeagueFilter]= useState("ALL");
+  const [topN,        setTopN]        = useState("ALL");
+  const [sortBy,      setSortBy]      = useState("confidence");
+  const [expanded,    setExpanded]    = useState(null);
+
+  useEffect(()=>{
+    // Inject responsive + visual CSS
+    const css = `
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin:0; padding:0; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+      ::-webkit-scrollbar { width:3px; }
+      ::-webkit-scrollbar-track { background:transparent; }
+      ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:4px; }
+      select option { background:#0f172a; color:#e2e8f0; }
+      button { -webkit-tap-highlight-color:transparent; }
+
+      .bai-root { display:flex; min-height:100vh; }
+
+      /* Sidebar — desktop only */
+      .bai-sidebar {
+        width:200px; flex-shrink:0; display:flex; flex-direction:column;
+        position:sticky; top:0; height:100vh; z-index:10;
+        background:rgba(4,9,26,0.85);
+        border-right:1px solid rgba(255,255,255,0.07);
+        backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      }
+
+      /* Main area */
+      .bai-main {
+        flex:1; min-width:0; overflow-y:auto; position:relative; z-index:1;
+        padding:28px 28px 80px;
+      }
+
+      /* Bottom nav — mobile only, hidden on desktop */
+      .bai-bottom-nav { display:none; }
+
+      /* KPI grid */
+      .bai-kpi { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:20px; }
+
+      /* Controls row */
+      .bai-controls { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+      .bai-filter-pills { display:flex; gap:6px; flex-wrap:wrap; }
+      .bai-selects { display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap; }
+
+      /* League pills */
+      .bai-leagues { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+
+      /* History grid */
+      .bai-hist-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
+
+      /* Analytics stat grid */
+      .bai-stat-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+
+      /* Card expanded stats */
+      .bai-card-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+
+      /* Glass effect — crisp and bright */
+      .bai-glass {
+        background:rgba(255,255,255,0.065);
+        backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+        border:1px solid rgba(255,255,255,0.12);
+        border-radius:16px;
+      }
+      .bai-glass-sm {
+        background:rgba(255,255,255,0.06);
+        backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+        border:1px solid rgba(255,255,255,0.10);
+        border-radius:12px;
+      }
+
+      /* ── TABLET ── */
+      @media (max-width:900px) {
+        .bai-kpi { grid-template-columns:repeat(3,1fr); }
+        .bai-hist-kpi { grid-template-columns:repeat(2,1fr); }
+        .bai-main { padding:20px 18px 100px; }
+      }
+
+      /* ── MOBILE ── */
+      @media (max-width:640px) {
+        .bai-sidebar { display:none !important; }
+
+        .bai-bottom-nav {
+          display:flex !important;
+          position:fixed; bottom:0; left:0; right:0; z-index:100;
+          background:rgba(4,9,26,0.97);
+          border-top:1px solid rgba(255,255,255,0.09);
+          backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+          padding:8px 0 env(safe-area-inset-bottom, 12px);
+          justify-content:space-around; align-items:center;
+        }
+        .bai-bottom-nav button {
+          display:flex; flex-direction:column; align-items:center; gap:3px;
+          background:none; border:none; cursor:pointer; padding:6px 16px;
+          color:rgba(255,255,255,0.35); font-family:inherit; font-size:9px;
+          font-weight:700; letter-spacing:0.06em; transition:color 0.15s;
+          -webkit-tap-highlight-color:transparent;
+        }
+        .bai-bottom-nav button.active { color:#60a5fa; }
+        .bai-bottom-nav button span.icon { font-size:20px; line-height:1; }
+
+        .bai-main { padding:16px 14px 90px; }
+
+        .bai-kpi { grid-template-columns:repeat(2,1fr); gap:6px; }
+        .bai-hist-kpi { grid-template-columns:repeat(2,1fr); gap:6px; }
+        .bai-stat-grid { grid-template-columns:1fr 1fr; }
+        .bai-card-stats { grid-template-columns:1fr 1fr; }
+
+        .bai-controls { gap:8px; }
+        .bai-selects { margin-left:0; width:100%; }
+
+        h1.bai-title { font-size:20px !important; }
+      }
+
+      @media (max-width:380px) {
+        .bai-kpi { grid-template-columns:1fr 1fr; }
+        .bai-main { padding:12px 12px 90px; }
+      }
+    `;
+    const el = document.createElement("style");
+    el.id = "bai-css";
+    el.textContent = css;
+    if (!document.getElementById("bai-css")) document.head.appendChild(el);
+    return () => { document.getElementById("bai-css")?.remove(); };
+  }, []);
 
   useEffect(()=>{
     (async()=>{
@@ -581,15 +702,13 @@ export default function App() {
     })();
   },[]);
 
-  const leagues = [...new Set(preds.map(p=>p.league).filter(Boolean))];
+  const leagues     = [...new Set(preds.map(p=>p.league).filter(Boolean))];
   const actionable  = preds.filter(p=>p.play!=="PASS");
   const strongPicks = preds.filter(p=>Math.round(p.play_probability*100)>=80&&p.play!=="PASS");
   const mediumPicks = preds.filter(p=>{const c=Math.round(p.play_probability*100);return c>=70&&c<80&&p.play!=="PASS";});
   const avoidPicks  = preds.filter(p=>p.play==="PASS");
-
-  const gradedAll = history.flatMap(h=>h.games||[]).filter(g=>g.graded&&g.correct!==null);
-  const modelAcc  = gradedAll.length>0
-    ? `${(gradedAll.filter(g=>g.correct).length/gradedAll.length*100).toFixed(1)}%` : "—";
+  const gradedAll   = history.flatMap(h=>h.games||[]).filter(g=>g.graded&&g.correct!==null);
+  const modelAcc    = gradedAll.length>0 ? `${(gradedAll.filter(g=>g.correct).length/gradedAll.length*100).toFixed(1)}%` : "—";
 
   let filtered = [...preds];
   if(filter==="OVER")   filtered=filtered.filter(p=>p.play==="OVER");
@@ -597,156 +716,188 @@ export default function App() {
   if(filter==="STRONG") filtered=filtered.filter(p=>Math.round(p.play_probability*100)>=80&&p.play!=="PASS");
   if(filter==="MEDIUM") filtered=filtered.filter(p=>{const c=Math.round(p.play_probability*100);return c>=70&&c<80;});
   if(filter==="AVOID")  filtered=filtered.filter(p=>p.play==="PASS");
-  if(filter==="WINS")   filtered=filtered.filter(p=>p.correct===true);
   if(leagueFilter!=="ALL") filtered=filtered.filter(p=>p.league===leagueFilter);
   if(sortBy==="confidence") filtered.sort((a,b)=>b.play_probability-a.play_probability);
   if(sortBy==="date")       filtered.sort((a,b)=>new Date(a.commence_time)-new Date(b.commence_time));
   if(sortBy==="ev")         filtered.sort((a,b)=>(b.ev_per_dollar||-99)-(a.ev_per_dollar||-99));
   if(topN!=="ALL") filtered=filtered.slice(0,parseInt(topN));
 
-  const glass = {background:"rgba(255,255,255,0.04)",backdropFilter:"blur(20px)",
-    WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16};
-
   const TABS = [
-    {id:"predictions",label:"Predictions"},
-    {id:"history",    label:"History"},
-    {id:"analytics",  label:"Analytics"},
+    {id:"predictions", label:"Predictions", icon:"🏀"},
+    {id:"history",     label:"History",     icon:"📊"},
+    {id:"analytics",   label:"Analytics",   icon:"📈"},
   ];
 
-  return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#060d1f 0%,#0b1629 40%,#060d1f 100%)",
-      color:"#e2e8f0",fontFamily:"'DM Sans','Inter',system-ui,sans-serif",display:"flex"}}>
-      <div style={{position:"fixed",top:-180,left:-180,width:500,height:500,borderRadius:"50%",
-        background:"rgba(59,130,246,0.08)",filter:"blur(100px)",pointerEvents:"none",zIndex:0}}/>
-      <div style={{position:"fixed",bottom:-100,right:-100,width:400,height:400,borderRadius:"50%",
-        background:"rgba(99,102,241,0.07)",filter:"blur(80px)",pointerEvents:"none",zIndex:0}}/>
+  const updatedStr = genAt
+    ? `Updated ${new Date(genAt).toLocaleDateString("en-US",{month:"short",day:"numeric"})} · ${new Date(genAt).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}`
+    : "Auto-updates 9AM · 2PM ET";
 
-      {/* Sidebar */}
-      <div style={{width:210,flexShrink:0,background:"rgba(255,255,255,0.02)",
-        borderRight:"1px solid rgba(255,255,255,0.06)",display:"flex",flexDirection:"column",
-        padding:"24px 0",position:"sticky",top:0,height:"100vh",zIndex:10}}>
-        <div style={{padding:"0 18px 22px",borderBottom:"1px solid rgba(255,255,255,0.06)",marginBottom:14}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-            <div style={{width:36,height:36,borderRadius:10,
-              background:"linear-gradient(135deg,#3b82f6,#6366f1)",display:"flex",alignItems:"center",
-              justifyContent:"center",fontSize:18}}>🏀</div>
+  return (
+    <div className="bai-root" style={{
+      background:"linear-gradient(145deg,#04091a 0%,#06101f 50%,#04091a 100%)",
+      color:"#e2e8f0", fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+    }}>
+      {/* Ambient glows — brighter */}
+      <div style={{position:"fixed",top:-200,left:-150,width:550,height:550,borderRadius:"50%",
+        background:"rgba(59,130,246,0.14)",filter:"blur(110px)",pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"fixed",bottom:-120,right:-120,width:450,height:450,borderRadius:"50%",
+        background:"rgba(99,102,241,0.12)",filter:"blur(90px)",pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"fixed",top:"45%",right:"-5%",width:300,height:300,borderRadius:"50%",
+        background:"rgba(168,85,247,0.07)",filter:"blur(120px)",pointerEvents:"none",zIndex:0}}/>
+
+      {/* ── Sidebar (desktop) ── */}
+      <div className="bai-sidebar">
+        <div style={{padding:"22px 18px 18px",borderBottom:"1px solid rgba(255,255,255,0.07)",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+            <div style={{width:38,height:38,borderRadius:11,flexShrink:0,
+              background:"linear-gradient(135deg,#3b82f6,#6366f1)",
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,
+              boxShadow:"0 4px 14px rgba(59,130,246,0.35)"}}>🏀</div>
             <div>
-              <div style={{fontSize:12,fontWeight:800,letterSpacing:"-0.3px",color:"#f1f5f9"}}>BASKETBALL</div>
+              <div style={{fontSize:12,fontWeight:800,letterSpacing:"-0.3px",color:"#f1f5f9",lineHeight:1.2}}>BASKETBALL</div>
               <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em"}}>AI INTELLIGENCE</div>
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <div style={{width:6,height:6,borderRadius:"50%",background:live?"#22c55e":"#64748b",
-              boxShadow:live?"0 0 6px #22c55e":"none"}}/>
-            <span style={{fontSize:10,color:live?"#4ade80":"#64748b"}}>{live?"Live Data":"Demo Mode"}</span>
+            <div style={{width:7,height:7,borderRadius:"50%",
+              background:live?"#22c55e":"#64748b",
+              boxShadow:live?"0 0 8px #22c55e":"none",flexShrink:0}}/>
+            <span style={{fontSize:10,color:live?"#4ade80":"#64748b",fontWeight:500}}>{live?"Live Data":"Demo Mode"}</span>
           </div>
         </div>
 
-        {TABS.map(({id,label})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} style={{
-            display:"flex",alignItems:"center",gap:10,padding:"11px 18px",margin:"2px 8px",
-            borderRadius:10,background:activeTab===id?"rgba(59,130,246,0.15)":"transparent",
-            border:activeTab===id?"1px solid rgba(59,130,246,0.3)":"1px solid transparent",
-            color:activeTab===id?"#60a5fa":"rgba(255,255,255,0.4)",
-            fontSize:12,fontWeight:activeTab===id?700:400,cursor:"pointer",transition:"all 0.2s",textAlign:"left",
-          }}>{label}</button>
-        ))}
+        <nav style={{padding:"6px 8px",flex:1}}>
+          {TABS.map(({id,label,icon})=>(
+            <button key={id} onClick={()=>setActiveTab(id)} style={{
+              display:"flex",alignItems:"center",gap:10,padding:"11px 14px",
+              borderRadius:10,width:"100%",
+              background:activeTab===id?"rgba(59,130,246,0.18)":"transparent",
+              border:activeTab===id?"1px solid rgba(59,130,246,0.35)":"1px solid transparent",
+              color:activeTab===id?"#60a5fa":"rgba(255,255,255,0.38)",
+              fontSize:12,fontWeight:activeTab===id?700:400,cursor:"pointer",
+              transition:"all 0.15s",textAlign:"left",
+              boxShadow:activeTab===id?"inset 0 1px 0 rgba(255,255,255,0.08)":"none",
+            }}>
+              <span style={{fontSize:15}}>{icon}</span>
+              {label}
+            </button>
+          ))}
+        </nav>
 
-        <div style={{marginTop:"auto",padding:"16px 18px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-          <div style={{fontSize:9,color:"rgba(255,255,255,0.18)",lineHeight:1.7}}>
-            {genAt ? `Updated ${new Date(genAt).toLocaleDateString("en-US",{month:"short",day:"numeric"})} ${new Date(genAt).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}` : "Auto-updates 9AM · 2PM · 2AM ET"}
-          </div>
-          <div style={{fontSize:9,color:"rgba(255,255,255,0.1)",marginTop:3}}>
-            Monte Carlo · XGBoost · Kelly · ESPN · BDL
-          </div>
+        <div style={{padding:"14px 18px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+          <div style={{fontSize:9,color:"rgba(255,255,255,0.2)",lineHeight:1.8}}>{updatedStr}</div>
+          <div style={{fontSize:9,color:"rgba(255,255,255,0.1)",marginTop:2}}>Monte Carlo · Kelly · ESPN · BDL</div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div style={{flex:1,minWidth:0,padding:"26px 26px 60px",overflowY:"auto",position:"relative",zIndex:1}}>
+      {/* ── Main content ── */}
+      <div className="bai-main">
 
-        {/* ── PREDICTIONS ── */}
+        {/* Mobile header — only visible on mobile since sidebar is hidden */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+          marginBottom:18,paddingBottom:14,
+          borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:34,height:34,borderRadius:10,flexShrink:0,
+              background:"linear-gradient(135deg,#3b82f6,#6366f1)",
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🏀</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.3px"}}>BASKETBALL-AI</div>
+              <div style={{fontSize:9,color:live?"#4ade80":"#64748b",display:"flex",alignItems:"center",gap:4}}>
+                <span style={{width:5,height:5,borderRadius:"50%",background:live?"#22c55e":"#64748b",display:"inline-block"}}/>
+                {live ? updatedStr : "Demo Mode"}
+              </div>
+            </div>
+          </div>
+          <div style={{textAlign:"right",fontSize:10,color:"rgba(255,255,255,0.25)"}}>
+            {new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
+          </div>
+        </div>
+
+        {/* ── PREDICTIONS TAB ── */}
         {activeTab==="predictions"&&(
           <>
-            <div style={{marginBottom:22}}>
-              <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>
-                Today's Best Over/Under Picks
+            <div style={{marginBottom:20}}>
+              <h1 className="bai-title" style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:"0 0 4px"}}>
+                Today's Best Picks
               </h1>
-              <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"6px 0 0"}}>
+              <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:0}}>
                 {new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
               </p>
             </div>
 
-            {/* KPI row */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:20}}>
+            {/* KPIs */}
+            <div className="bai-kpi">
               {[
-                ["Games Analyzed",preds.length,         "#f1f5f9"],
-                ["Strong Picks",  strongPicks.length,    "#22c55e"],
-                ["Medium Picks",  mediumPicks.length,    "#3b82f6"],
-                ["Avoid",         avoidPicks.length,     "#ef4444"],
-                ["Model Accuracy",modelAcc,              "#a78bfa"],
+                ["Games",        preds.length,      "#f1f5f9"],
+                ["Strong",       strongPicks.length, "#22c55e"],
+                ["Medium",       mediumPicks.length, "#3b82f6"],
+                ["Avoid",        avoidPicks.length,  "#ef4444"],
+                ["Accuracy",     modelAcc,           "#a78bfa"],
               ].map(([label,val,color])=>(
-                <div key={label} style={{...glass,padding:"14px"}}>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.05em",marginBottom:8}}>
-                    {label.toUpperCase()}
-                  </div>
-                  <div style={{fontSize:26,fontWeight:800,color,letterSpacing:"-1px",lineHeight:1}}>{val}</div>
+                <div key={label} className="bai-glass" style={{padding:"14px 16px"}}>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.07em",marginBottom:8,textTransform:"uppercase"}}>{label}</div>
+                  <div style={{fontSize:24,fontWeight:800,color,letterSpacing:"-1px",lineHeight:1}}>{val}</div>
                 </div>
               ))}
             </div>
 
             {/* Controls */}
-            <div style={{display:"flex",gap:10,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            <div className="bai-controls">
+              <div className="bai-filter-pills">
                 {["ALL","OVER","UNDER","STRONG","MEDIUM","AVOID"].map(f=>(
                   <button key={f} onClick={()=>setFilter(f)} style={{
-                    background:filter===f?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",
-                    border:`1px solid ${filter===f?"rgba(59,130,246,0.45)":"rgba(255,255,255,0.09)"}`,
+                    background:filter===f?"rgba(59,130,246,0.22)":"rgba(255,255,255,0.05)",
+                    border:`1px solid ${filter===f?"rgba(59,130,246,0.5)":"rgba(255,255,255,0.09)"}`,
                     color:filter===f?"#60a5fa":"rgba(255,255,255,0.4)",
-                    padding:"5px 13px",borderRadius:20,fontSize:10,fontWeight:700,cursor:"pointer",
-                    letterSpacing:"0.05em",transition:"all 0.15s",
+                    padding:"6px 13px",borderRadius:20,fontSize:10,fontWeight:700,
+                    cursor:"pointer",letterSpacing:"0.05em",transition:"all 0.15s",
+                    boxShadow:filter===f?"0 0 12px rgba(59,130,246,0.2)":"none",
                   }}>{f}</button>
                 ))}
               </div>
-              <div style={{flex:1}}/>
-              {[
-                ["Sort",sortBy,setSortBy,[["confidence","Confidence"],["date","Date"],["ev","Expected Value"]]],
-                ["Show",topN,  setTopN,  [["ALL","All Picks"],["10","Best 10"],["20","Best 20"]]],
-              ].map(([label,val,setter,opts])=>(
-                <div key={label} style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{label}</span>
-                  <select value={val} onChange={e=>setter(e.target.value)} style={{
-                    background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",
-                    color:"#f1f5f9",borderRadius:8,padding:"5px 10px",fontSize:10,
-                    fontFamily:"inherit",outline:"none",cursor:"pointer",
-                  }}>
-                    {opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}
-                  </select>
-                </div>
-              ))}
+              <div className="bai-selects">
+                {[
+                  ["Sort",sortBy,setSortBy,[["confidence","Confidence"],["date","Date"],["ev","EV"]]],
+                  ["Show",topN,  setTopN,  [["ALL","All"],["10","Top 10"],["20","Top 20"]]],
+                ].map(([label,val,setter,opts])=>(
+                  <div key={label} style={{display:"flex",alignItems:"center",gap:5}}>
+                    <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{label}</span>
+                    <select value={val} onChange={e=>setter(e.target.value)} style={{
+                      background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.13)",
+                      color:"#f1f5f9",borderRadius:8,padding:"5px 10px",fontSize:10,
+                      fontFamily:"inherit",outline:"none",cursor:"pointer",
+                    }}>
+                      {opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* League pills */}
-            <div style={{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap"}}>
+            <div className="bai-leagues">
               <button onClick={()=>setLeagueFilter("ALL")} style={{
-                background:leagueFilter==="ALL"?"rgba(255,255,255,0.1)":"rgba(255,255,255,0.03)",
-                border:`1px solid ${leagueFilter==="ALL"?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.07)"}`,
+                background:leagueFilter==="ALL"?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.04)",
+                border:`1px solid ${leagueFilter==="ALL"?"rgba(255,255,255,0.22)":"rgba(255,255,255,0.08)"}`,
                 color:leagueFilter==="ALL"?"#f1f5f9":"rgba(255,255,255,0.3)",
                 padding:"5px 14px",borderRadius:20,fontSize:10,fontWeight:700,cursor:"pointer",
               }}>All Leagues</button>
               {leagues.map(l=>{
                 const lc=LC[l]||DLC; const active=leagueFilter===l;
-                return (
+                return(
                   <button key={l} onClick={()=>setLeagueFilter(active?"ALL":l)} style={{
-                    background:active?`${lc.color}22`:"rgba(255,255,255,0.03)",
-                    border:`1px solid ${active?lc.color:"rgba(255,255,255,0.07)"}`,
+                    background:active?`${lc.color}25`:"rgba(255,255,255,0.04)",
+                    border:`1px solid ${active?lc.color:"rgba(255,255,255,0.08)"}`,
                     color:active?lc.color:"rgba(255,255,255,0.3)",
-                    padding:"5px 14px",borderRadius:20,fontSize:10,fontWeight:700,cursor:"pointer",
+                    padding:"5px 12px",borderRadius:20,fontSize:10,fontWeight:700,cursor:"pointer",
                     display:"flex",alignItems:"center",gap:5,
+                    boxShadow:active?`0 0 10px ${lc.color}30`:"none",
                   }}>
-                    <span style={{width:5,height:5,borderRadius:"50%",background:lc.color}}/>
+                    <span style={{width:5,height:5,borderRadius:"50%",background:lc.color,
+                      boxShadow:active?`0 0 4px ${lc.color}`:"none"}}/>
                     {lc.label}
-                    <span style={{color:"rgba(255,255,255,0.2)"}}>({preds.filter(p=>p.league===l).length})</span>
+                    <span style={{color:"rgba(255,255,255,0.2)",fontSize:9}}>({preds.filter(p=>p.league===l).length})</span>
                   </button>
                 );
               })}
@@ -762,37 +913,45 @@ export default function App() {
                 expanded={expanded===pred.game_id}
                 onToggle={()=>setExpanded(expanded===pred.game_id?null:pred.game_id)}/>
             ))}
-            <div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.1)",marginTop:16}}>
-              Statistical model · Monte Carlo · Kelly sizing · ESPN · Ball Don't Lie · Not financial advice
+            <div style={{textAlign:"center",fontSize:9,color:"rgba(255,255,255,0.1)",marginTop:20,lineHeight:2}}>
+              Statistical model · Monte Carlo · Kelly sizing · ESPN · BallDontLie<br/>Not financial advice
             </div>
           </>
         )}
 
-        {/* ── HISTORY ── */}
         {activeTab==="history"&&(
           <>
-            <div style={{marginBottom:22}}>
-              <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>Prediction History</h1>
-              <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"6px 0 0"}}>
-                Daily graded results — expand any day for per-game breakdown
-              </p>
-            </div>
+            <h1 className="bai-title" style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:"0 0 4px"}}>
+              Prediction History
+            </h1>
+            <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"0 0 20px"}}>
+              Daily graded results — tap any day for per-game breakdown
+            </p>
             <HistoryTab history={history}/>
           </>
         )}
 
-        {/* ── ANALYTICS ── */}
         {activeTab==="analytics"&&(
           <>
-            <div style={{marginBottom:22}}>
-              <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>Analytics</h1>
-              <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"6px 0 0"}}>
-                Historical accuracy by confidence tier and league
-              </p>
-            </div>
+            <h1 className="bai-title" style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:"0 0 4px"}}>
+              Analytics
+            </h1>
+            <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"0 0 20px"}}>
+              Accuracy by confidence tier and league
+            </p>
             <AnalyticsTab preds={preds} history={history}/>
           </>
         )}
+      </div>
+
+      {/* ── Bottom nav (mobile only) ── */}
+      <div className="bai-bottom-nav">
+        {TABS.map(({id,label,icon})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"active":""}>
+            <span className="icon">{icon}</span>
+            {label}
+          </button>
+        ))}
       </div>
     </div>
   );
