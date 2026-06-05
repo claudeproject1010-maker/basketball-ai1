@@ -205,7 +205,10 @@ def get_balldontlie_games() -> list[dict]:
         return []
 
     games = []
-    headers = {"Authorization": BDL_KEY}
+    if not BDL_KEY:
+        log.info("No BALLDONTLIE_KEY — skipping BallDontLie")
+        return []
+    headers = {"Authorization": BDL_KEY, "Accept": "application/json"}
     endpoints = [
         (f"{BDL_BASE}/nba/v1/games",  "basketball_nba",  "NBA"),
         (f"{BDL_BASE}/wnba/v1/games", "basketball_wnba", "WNBA"),
