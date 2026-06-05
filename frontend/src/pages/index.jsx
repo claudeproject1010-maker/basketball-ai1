@@ -70,12 +70,12 @@ function ConfRing({ prob, size=80 }) {
       {/* Bottom nav — mobile only */}
       <div className="bai-bottom-nav">
         {[
-          {id:"predictions",label:"Picks",icon:"🏀"},
-          {id:"history",    label:"History",icon:"📊"},
-          {id:"analytics",  label:"Stats",  icon:"📈"},
-        ].map(({id,label,icon})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-active":""}>
-            <span>{icon}</span>{label}
+          {id:"predictions",icon:"🏀",label:"Picks"},
+          {id:"history",    icon:"📊",label:"History"},
+          {id:"analytics",  icon:"📈",label:"Stats"},
+        ].map(({id,icon,label})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-act":""}>
+            <span className="bni">{icon}</span>{label}
           </button>
         ))}
       </div>
@@ -99,12 +99,12 @@ function ModelDots({ prob }) {
       {/* Bottom nav — mobile only */}
       <div className="bai-bottom-nav">
         {[
-          {id:"predictions",label:"Picks",icon:"🏀"},
-          {id:"history",    label:"History",icon:"📊"},
-          {id:"analytics",  label:"Stats",  icon:"📈"},
-        ].map(({id,label,icon})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-active":""}>
-            <span>{icon}</span>{label}
+          {id:"predictions",icon:"🏀",label:"Picks"},
+          {id:"history",    icon:"📊",label:"History"},
+          {id:"analytics",  icon:"📈",label:"Stats"},
+        ].map(({id,icon,label})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-act":""}>
+            <span className="bni">{icon}</span>{label}
           </button>
         ))}
       </div>
@@ -284,12 +284,12 @@ function PredCard({ pred, expanded, onToggle }) {
       {/* Bottom nav — mobile only */}
       <div className="bai-bottom-nav">
         {[
-          {id:"predictions",label:"Picks",icon:"🏀"},
-          {id:"history",    label:"History",icon:"📊"},
-          {id:"analytics",  label:"Stats",  icon:"📈"},
-        ].map(({id,label,icon})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-active":""}>
-            <span>{icon}</span>{label}
+          {id:"predictions",icon:"🏀",label:"Picks"},
+          {id:"history",    icon:"📊",label:"History"},
+          {id:"analytics",  icon:"📈",label:"Stats"},
+        ].map(({id,icon,label})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-act":""}>
+            <span className="bni">{icon}</span>{label}
           </button>
         ))}
       </div>
@@ -465,12 +465,12 @@ function HistoryTab({ history }) {
       {/* Bottom nav — mobile only */}
       <div className="bai-bottom-nav">
         {[
-          {id:"predictions",label:"Picks",icon:"🏀"},
-          {id:"history",    label:"History",icon:"📊"},
-          {id:"analytics",  label:"Stats",  icon:"📈"},
-        ].map(({id,label,icon})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-active":""}>
-            <span>{icon}</span>{label}
+          {id:"predictions",icon:"🏀",label:"Picks"},
+          {id:"history",    icon:"📊",label:"History"},
+          {id:"analytics",  icon:"📈",label:"Stats"},
+        ].map(({id,icon,label})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-act":""}>
+            <span className="bni">{icon}</span>{label}
           </button>
         ))}
       </div>
@@ -575,12 +575,12 @@ function AnalyticsTab({ preds, history }) {
       {/* Bottom nav — mobile only */}
       <div className="bai-bottom-nav">
         {[
-          {id:"predictions",label:"Picks",icon:"🏀"},
-          {id:"history",    label:"History",icon:"📊"},
-          {id:"analytics",  label:"Stats",  icon:"📈"},
-        ].map(({id,label,icon})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-active":""}>
-            <span>{icon}</span>{label}
+          {id:"predictions",icon:"🏀",label:"Picks"},
+          {id:"history",    icon:"📊",label:"History"},
+          {id:"analytics",  icon:"📈",label:"Stats"},
+        ].map(({id,icon,label})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-act":""}>
+            <span className="bni">{icon}</span>{label}
           </button>
         ))}
       </div>
@@ -638,49 +638,44 @@ export default function App() {
   const [sortBy,     setSortBy]     = useState("confidence");
   const [expanded,   setExpanded]   = useState(null);
 
-  // Responsive CSS injection
   useEffect(()=>{
-    const css = `
-      *, *::before, *::after { box-sizing:border-box; }
-      body { margin:0; padding:0; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
-      ::-webkit-scrollbar { width:3px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:4px; }
-      select option { background:#0f172a; color:#e2e8f0; }
-      button { -webkit-tap-highlight-color:transparent; }
-      .bai-sidebar { display:flex!important; flex-direction:column; }
-      .bai-bottom-nav { display:none!important; }
-      @media (max-width:700px) {
-        .bai-sidebar { display:none!important; }
-        .bai-bottom-nav {
-          display:flex!important; position:fixed; bottom:0; left:0; right:0; z-index:100;
-          background:rgba(4,9,26,0.97); border-top:1px solid rgba(255,255,255,0.09);
-          backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+    const css=`
+      *,*::before,*::after{box-sizing:border-box;}
+      body{margin:0;padding:0;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+      ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
+      select option{background:#0f172a;color:#e2e8f0;}
+      button{-webkit-tap-highlight-color:transparent;}
+      .bai-sidebar{display:flex!important;flex-direction:column;}
+      .bai-bottom-nav{display:none!important;}
+      @media(max-width:700px){
+        .bai-sidebar{display:none!important;}
+        .bai-bottom-nav{
+          display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:200;
+          background:rgba(4,9,26,0.97);border-top:1px solid rgba(255,255,255,0.1);
+          backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
           padding:8px 0 max(env(safe-area-inset-bottom,10px),10px);
-          justify-content:space-around; align-items:center;
+          justify-content:space-around;align-items:center;
         }
-        .bai-bottom-nav button {
-          display:flex; flex-direction:column; align-items:center; gap:3px; background:none;
-          border:none; cursor:pointer; padding:5px 12px; color:rgba(255,255,255,0.35);
-          font-family:inherit; font-size:9px; font-weight:700; letter-spacing:0.06em;
+        .bai-bottom-nav button{
+          display:flex;flex-direction:column;align-items:center;gap:3px;
+          background:none;border:none;cursor:pointer;padding:5px 16px;
+          color:rgba(255,255,255,0.3);font-family:inherit;font-size:9px;
+          font-weight:700;letter-spacing:0.07em;-webkit-tap-highlight-color:transparent;
         }
-        .bai-bottom-nav button.bnav-active { color:#60a5fa; }
-        .bai-bottom-nav button span { font-size:20px; line-height:1.2; }
-        .bai-main { padding:14px 12px 90px!important; }
-        .bai-kpi { grid-template-columns:repeat(2,1fr)!important; }
-        .bai-hkpi { grid-template-columns:repeat(2,1fr)!important; }
-        .bai-card-stats { grid-template-columns:1fr 1fr!important; }
-        .bai-ctrl { flex-direction:column!important; align-items:flex-start!important; gap:8px!important; }
-        .bai-selects { margin-left:0!important; }
-        h1.ptitle { font-size:19px!important; }
+        .bai-bottom-nav button.bnav-act{color:#60a5fa;}
+        .bai-bottom-nav button span.bni{font-size:22px;line-height:1.3;}
+        .bai-main{padding:14px 12px 90px!important;}
+        .bai-kpi{grid-template-columns:repeat(2,1fr)!important;}
+        .bai-ctrl{flex-direction:column!important;align-items:flex-start!important;gap:8px!important;}
       }
-      @media (min-width:701px) and (max-width:1000px) {
-        .bai-kpi { grid-template-columns:repeat(3,1fr)!important; }
+      @media(min-width:701px)and(max-width:1000px){
+        .bai-kpi{grid-template-columns:repeat(3,1fr)!important;}
       }
     `;
-    const el = document.createElement("style");
-    el.id="bai-css";
-    el.textContent=css;
-    if(!document.getElementById("bai-css")) document.head.appendChild(el);
-    return ()=>{ document.getElementById("bai-css")?.remove(); };
+    const el=document.createElement("style");
+    el.id="bai-css";el.textContent=css;
+    if(!document.getElementById("bai-css"))document.head.appendChild(el);
+    return()=>{document.getElementById("bai-css")?.remove();};
   },[]);
 
   useEffect(()=>{
@@ -732,8 +727,8 @@ export default function App() {
         background:"rgba(99,102,241,0.14)",filter:"blur(80px)",pointerEvents:"none",zIndex:0}}/>
 
       {/* Sidebar */}
-      <div className="bai-sidebar" style={{width:210,flexShrink:0,background:"rgba(255,255,255,0.045)",
-        borderRight:"1px solid rgba(255,255,255,0.10)",display:"flex",flexDirection:"column",
+      <div className="bai-sidebar" style={{width:210,flexShrink:0,background:"rgba(255,255,255,0.05)",
+        borderRight:"1px solid rgba(255,255,255,0.11)",display:"flex",flexDirection:"column",
         padding:"24px 0",position:"sticky",top:0,height:"100vh",zIndex:10}}>
         <div style={{padding:"0 18px 22px",borderBottom:"1px solid rgba(255,255,255,0.06)",marginBottom:14}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
@@ -779,7 +774,7 @@ export default function App() {
         {activeTab==="predictions"&&(
           <>
             <div style={{marginBottom:22}}>
-              <h1 className="ptitle" style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>
+              <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>
                 Today's Best Over/Under Picks
               </h1>
               <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"6px 0 0"}}>
@@ -882,7 +877,7 @@ export default function App() {
         {activeTab==="history"&&(
           <>
             <div style={{marginBottom:22}}>
-              <h1 className="ptitle" style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>Prediction History</h1>
+              <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>Prediction History</h1>
               <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"6px 0 0"}}>
                 Daily graded results — expand any day for per-game breakdown
               </p>
@@ -895,7 +890,7 @@ export default function App() {
         {activeTab==="analytics"&&(
           <>
             <div style={{marginBottom:22}}>
-              <h1 className="ptitle" style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>Analytics</h1>
+              <h1 style={{fontSize:24,fontWeight:800,letterSpacing:"-0.8px",color:"#f1f5f9",margin:0}}>Analytics</h1>
               <p style={{fontSize:12,color:"rgba(255,255,255,0.3)",margin:"6px 0 0"}}>
                 Historical accuracy by confidence tier and league
               </p>
@@ -908,12 +903,12 @@ export default function App() {
       {/* Bottom nav — mobile only */}
       <div className="bai-bottom-nav">
         {[
-          {id:"predictions",label:"Picks",icon:"🏀"},
-          {id:"history",    label:"History",icon:"📊"},
-          {id:"analytics",  label:"Stats",  icon:"📈"},
-        ].map(({id,label,icon})=>(
-          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-active":""}>
-            <span>{icon}</span>{label}
+          {id:"predictions",icon:"🏀",label:"Picks"},
+          {id:"history",    icon:"📊",label:"History"},
+          {id:"analytics",  icon:"📈",label:"Stats"},
+        ].map(({id,icon,label})=>(
+          <button key={id} onClick={()=>setActiveTab(id)} className={activeTab===id?"bnav-act":""}>
+            <span className="bni">{icon}</span>{label}
           </button>
         ))}
       </div>
