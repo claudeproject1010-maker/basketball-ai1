@@ -398,4 +398,3 @@ def get_free_scores(date_str: Optional[str] = None, leagues: Optional[list[str]]
 
     log.info(f"[FREE] Total free-source scores: {len(all_results)} games on {date_str}")
     return all_results
-  
