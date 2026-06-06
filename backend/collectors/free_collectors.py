@@ -37,6 +37,7 @@ HEADERS = _bdl_headers()
 #    Docs: https://www.balldontlie.io
 # ─────────────────────────────────────────────────────────────────────────────
 
+BDL_KEY  = os.getenv("BALLDONTLIE_KEY", "")
 BDL_BASE = "https://api.balldontlie.io/v1"
 
 
@@ -46,6 +47,9 @@ def _bdl_get(path: str, params: dict = {}) -> Optional[dict]:
         r = requests.get(f"{BDL_BASE}/{path}", params=params, headers=headers, timeout=10)
         if r.status_code == 401:
             log.warning(f"[BDL] 401 Unauthorized — check BALLDONTLIE_KEY in GitHub Secrets")
+            return None
+        if r.status_code == 401:
+            log.warning("[BDL] 401 Unauthorized — check BALLDONTLIE_KEY")
             return None
         r.raise_for_status()
         return r.json()
@@ -394,3 +398,4 @@ def get_free_scores(date_str: Optional[str] = None, leagues: Optional[list[str]]
 
     log.info(f"[FREE] Total free-source scores: {len(all_results)} games on {date_str}")
     return all_results
+  
