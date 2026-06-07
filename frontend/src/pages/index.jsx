@@ -126,7 +126,7 @@ function PredCard({ pred, expanded, onToggle }) {
   return (
     <div onClick={onToggle} style={{
       background: expanded ? "linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.07))" : "rgba(255,255,255,0.07)",
-      backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+      backdropFilter:"blur(28px)", WebkitBackdropFilter:"blur(20px)",
       border:`1px solid ${expanded?cc.border:"rgba(255,255,255,0.08)"}`,
       borderLeft:`3px solid ${isAct?cc.ring:"rgba(255,255,255,0.15)"}`,
       borderRadius:16, padding:"18px 20px", marginBottom:10,
@@ -307,7 +307,7 @@ function HistoryTab({ history }) {
   const totalPnL   = gradedDays.reduce((s,h)=>s+h.pnl,0);
   const winRate    = totalBets>0 ? totalWins/totalBets : 0;
 
-  const glass = {background:"rgba(255,255,255,0.09)",backdropFilter:"blur(24px)",
+  const glass = {background:"rgba(255,255,255,0.09)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",
     border:"1px solid rgba(255,255,255,0.15)",borderRadius:12};
 
   return (
