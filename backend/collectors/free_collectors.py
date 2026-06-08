@@ -54,6 +54,9 @@ def _bdl_get(path: str, params: dict = {}) -> Optional[dict]:
         if r.status_code == 401:
             log.warning("[BDL] 401 - check BALLDONTLIE_KEY secret")
             return None
+        if r.status_code == 401:
+            log.warning("[BDL] 401 - check BALLDONTLIE_KEY secret")
+            return None
         r.raise_for_status()
         return r.json()
     except Exception as e:
